@@ -17,61 +17,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ]]
 
-local GetInventoryItemLink = GetInventoryItemLink
-local ContainerIDToInventory = ContainerIDToInventory
-local GetItemInfo = GetItemInfo
-local GetContainerNumSlots = GetContainerNumSlots
-local GetContainerNumFreeSlots = GetContainerNumFreeSlots
+local db
+local playerName = UnitName("player")
+local playerRealm = GetRealmName()
 
-local playerName
-local playerRealm
-
-local Bags = CreateFrame("Frame", "Broker_Bags")
-Bags.obj = LibStub("LibDataBroker-1.1"):NewDataObject("Bags", {
+local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
+local dataobj = ldb:GetDataObjectByName("Bags") or ldb:NewDataObject("Bags", {
 	type = "data source",
 	icon = [[Interface\Icons\INV_Misc_Bag_11]],
 	text = "0/0",
-	OnClick = function()
-		ToggleBackpack()
-	end
+	OnClick = function() ToggleBackpack() end,
+	OnTooltipShow = function(tip)
+		tip:AddLine("Characters on " .. playerRealm)
+		for k,v in pairs(db[playerRealm]) do
+			tip:AddDoubleLine(k, v, 1,1,1, 1,1,1)
+		end
+	end,
 })
-
-local tip = LibStub("tektip-1.0").new(2, "LEFT", "RIGHT")
-Bags.obj.OnLeave = function() tip:Hide() end
-Bags.obj.OnEnter = function(self)
-	tip:AnchorTo(self)
-	tip:AddLine("Characters on " .. playerRealm)
-	for k,v in pairs(Broker_BagsDB[playerRealm]) do
-		tip:AddMultiLine(k, v, 1,1,1, 1,1,1)
-	end
-	tip:Show()
-end
-
-Bags:SetScript("OnEvent", function(_,event) Bags[event](Bags) end)
-Bags:RegisterEvent("PLAYER_LOGIN")
-Bags:RegisterEvent("ADDON_LOADED")
-
-function Bags:PLAYER_LOGIN()
-	self:RegisterEvent("BAG_UPDATE")
-	self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-end
-
-function Bags:ADDON_LOADED()
-	playerName = UnitName("player")
-	playerRealm = GetRealmName()
-	if not Broker_BagsDB then Broker_BagsDB = {} end
-	if not Broker_BagsDB[playerRealm] then Broker_BagsDB[playerRealm] = {} end	
-end
 
 local function UpdateText()
 	local totalSlots = 0
 	local freeSlots = 0
+	local itemLink, subtype
 	for i = 0,NUM_BAG_SLOTS do
 		local isBag = true
 		if i > 0 then
-			local itemLink = GetInventoryItemLink("player", ContainerIDToInventoryID(i))
+			itemLink = GetInventoryItemLink("player", ContainerIDToInventoryID(i))
 			if itemLink then
-				local subtype = select(7, GetItemInfo(itemLink))
+				subtype = select(7, GetItemInfo(itemLink))
 				if (subtype == "Soul Bag") or (subtype == "Ammo Pouch") or (subtype == "Quiver") then
 					isBag = false
 				end
@@ -83,12 +56,25 @@ local function UpdateText()
 		end
 	end
 
-	Bags.obj.text = string.format("%d/%d", totalSlots - freeSlots, totalSlots)
-	Broker_BagsDB[playerRealm][playerName] = Bags.obj.text
+	dataobj.text = string.format("%d/%d", totalSlots - freeSlots, totalSlots)
+	db[playerRealm][playerName] = dataobj.text
 end
 
-function Bags:BAG_UPDATE()
-	UpdateText()
-end
-Bags.UNIT_INVENTORY_CHANGED = Bags.BAG_UPDATE
+local f = CreateFrame("Frame")
+f:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
+f:RegisterEvent("ADDON_LOADED")
 
+self:RegisterEvent("BAG_UPDATE")
+f.BAG_UPDATE = UpdateText
+
+self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+f.UNIT_INVENTORY_CHANGED = UpdateText
+
+function f:ADDON_LOADED()
+	if addon:lower() ~= "broker_bags" then return end
+	db = Broker_BagsDB or {}
+	if not db[playerRealm] then db[playerRealm] = {} end	
+	LibStub("tekKonfig-AboutPanel").new(nil, "Broker_f") -- Make first arg nil if no parent config panel
+	self:UnregisterEvent("ADDON_LOADED")
+	self.ADDON_LOADED = nil
+end

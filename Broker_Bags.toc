@@ -1,14 +1,19 @@
 ## Interface: 30300
 ## Title: Broker Bags
-## Notes: Bags information plugin for LibDataBroker visualizers
-## Author: Quaiche
+## Notes: Bags information plugin for LibDataBroker displays
+## Author: Quaiche of Dragonblight
 ## Version: @project-version@
 ## SavedVariables: Broker_BagsDB
-## X-License: Apache 2.0 - see included LICENSE.txt
+
+## X-License: Apache 2.0
 ## X-Category: Miscellaneous
 
-LibStub.lua
-CallbackHandler-1.0.lua
-LibDataBroker-1.1.lua
-tektip.lua
+## LoadManagers: AddonLoader
+## X-LoadOn-Always: delayed
+
+libs\LibStub.lua
+libs\CallbackHandler-1.0.lua
+libs\LibDataBroker-1.1.lua
+libs\tekKonfigAboutPanel.lua
+
 Broker_Bags.lua
