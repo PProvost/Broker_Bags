@@ -18,21 +18,19 @@ limitations under the License.
 ]]
 
 local db
-local playerName = UnitName("player")
-local playerRealm = GetRealmName()
+local playerName, playerRealm = UnitName("player"), GetRealmName()
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobj = ldb:GetDataObjectByName("Bags") or ldb:NewDataObject("Bags", {
-	type = "data source",
-	icon = [[Interface\Icons\INV_Misc_Bag_11]],
-	text = "0/0",
+	type = "data source", icon = [[Interface\Icons\INV_Misc_Bag_11]], text = "0/0",
 	OnClick = function() ToggleBackpack() end,
 	OnTooltipShow = function(tip)
 		tip:AddLine("Characters on " .. playerRealm)
 		for k,v in pairs(db[playerRealm]) do
 			tip:AddDoubleLine(k, v, 1,1,1, 1,1,1)
 		end
-		tip:AddLine("Hint: Space is shown as used/total. Click to open your bags.", 0, 1, 0)
+		tip:AddLine("Click to open your bags.")
+		tip:AddLine("Hint: Click to open your bags.", 0, 1, 0, true)
 	end,
 })
 
@@ -64,17 +62,19 @@ local f = CreateFrame("Frame")
 f:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
 f:RegisterEvent("ADDON_LOADED")
 
-self:RegisterEvent("BAG_UPDATE")
+f:RegisterEvent("BAG_UPDATE")
 f.BAG_UPDATE = UpdateText
 
-self:RegisterEvent("UNIT_INVENTORY_CHANGED")
+f:RegisterEvent("UNIT_INVENTORY_CHANGED")
 f.UNIT_INVENTORY_CHANGED = UpdateText
 
-function f:ADDON_LOADED()
+function f:ADDON_LOADED(event,addon)
 	if addon:lower() ~= "broker_bags" then return end
 	db = Broker_BagsDB or {}
 	if not db[playerRealm] then db[playerRealm] = {} end	
 	LibStub("tekKonfig-AboutPanel").new(nil, "Broker_Bags")
 	self:UnregisterEvent("ADDON_LOADED")
 	self.ADDON_LOADED = nil
+
+	if IsLoggedIn() then UpdateText() else self:RegisterEvent("PLAYER_LOGIN"); self.PLAYER_LOGIN = UpdateText end
 end
