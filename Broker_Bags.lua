@@ -1,8 +1,8 @@
 --[[
-Name: Broker_Bags\Broker_Bags.lua
+Name: Broker_Bags
 Description: Keeps track of your favorite things to say
 
-Copyright 2008 Quaiche
+Copyright 2008 Quaiche of Dragonblight
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ local dataobj = ldb:GetDataObjectByName("Bags") or ldb:NewDataObject("Bags", {
 		for k,v in pairs(db[playerRealm]) do
 			tip:AddDoubleLine(k, v, 1,1,1, 1,1,1)
 		end
+		tip:AddLine("Hint: Space is shown as used/total. Click to open your bags.", 0, 1, 0)
 	end,
 })
 
 local function UpdateText()
-	local totalSlots = 0
-	local freeSlots = 0
-	local itemLink, subtype
+	local totalSlots, freeSlots = 0, 0
+	local itemLink, subtype, isBag
 	for i = 0,NUM_BAG_SLOTS do
-		local isBag = true
+		isBag = true
 		if i > 0 then
 			itemLink = GetInventoryItemLink("player", ContainerIDToInventoryID(i))
 			if itemLink then
@@ -74,7 +74,7 @@ function f:ADDON_LOADED()
 	if addon:lower() ~= "broker_bags" then return end
 	db = Broker_BagsDB or {}
 	if not db[playerRealm] then db[playerRealm] = {} end	
-	LibStub("tekKonfig-AboutPanel").new(nil, "Broker_f") -- Make first arg nil if no parent config panel
+	LibStub("tekKonfig-AboutPanel").new(nil, "Broker_Bags")
 	self:UnregisterEvent("ADDON_LOADED")
 	self.ADDON_LOADED = nil
 end
