@@ -1,4 +1,4 @@
-## Interface: 40000
+## Interface: 50001
 ## Title: Broker Bags
 ## Notes: Bags information plugin for LibDataBroker displays
 ## Author: Quaiche of Dragonblight
